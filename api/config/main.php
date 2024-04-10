@@ -48,6 +48,7 @@ return [
                 ['class' => 'yii\rest\UrlRule', 'controller' => 'user'],
                 'POST users/register' => 'user/register', 
                 'POST users/login' => 'user/login', 
+                'POST file/add' => 'file/add',
             ],
         ]
         
