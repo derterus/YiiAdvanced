@@ -35,22 +35,30 @@ class UserController extends ActiveController
         }
     }
     public function actionLogin()
-{
-    Yii::$app->response->format = Response::FORMAT_JSON;
-
-    $post = Yii::$app->request->post();
-
-    if (!empty($post['username']) && !empty($post['password'])) {
-        $user = User::findByUsername($post['username']);
-
-        if ($user && $user->validatePassword($post['password'])) {
-            return ['user'=>$user];
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+    
+        $post = Yii::$app->request->post();
+    
+        if (!empty($post['username']) && !empty($post['password'])) {
+            $user = User::findByUsername($post['username']);
+    
+            if ($user && $user->validatePassword($post['password'])) {
+                    return [
+                        'status' => 'success',
+                        'data' => [
+                            'user' => $user,
+                            'token' => $user->auth_key, // Возвращаем токен
+                        ],
+                    ];
+                
+            } else {
+                return ['status' => 'error', 'data' => 'Invalid username or password.'];
+            }
         } else {
-            return ['status' => 'error', 'data' => 'Invalid username or password.'];
+            return ['status' => 'error', 'data' => 'Invalid parameters.'];
         }
-    } else {
-        return ['status' => 'error', 'data' => 'Invalid parameters.'];
     }
-}
+    
 
 }

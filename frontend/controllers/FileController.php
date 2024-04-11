@@ -72,37 +72,42 @@ class FileController extends Controller
     
         if ($model->load(Yii::$app->request->post())) {
             $file = UploadedFile::getInstance($model, 'file');
-            if ($file) {
-                // Используйте временный путь к файлу
-                $filePath = $file->tempName;
-    
+            if ($file !== null) {
                 $client = new \yii\httpclient\Client();
                 $request = $client->createRequest()
                     ->setMethod('POST')
                     ->setUrl('http://webapiyii:8080/file/add')
-                    ->addFile('file', $filePath);
-                
+                    ->addFile('file', $file->tempName, ['fileName' => $file->name]); // Используем оригинальное имя файла
+    
                 // Добавляем токен в заголовки запроса
-                $request->addHeaders(['Authorization' => 'Bearer zt91FoBtNj3ZjLtca-8a-oMhXYJMQkou_1712548354']);
-                
+                $request->addHeaders(['Authorization' => 'Bearer ' . Yii::$app->session->get('user-token')]);
+    
                 $response = $request->send();
                 if ($response->isOk) {
                     // обработка успешного ответа
-                    Yii::info("File uploaded successfully.");
-                } else {
-                    Yii::error("Failed to upload file. Response: " . print_r($response->data, true), 'file_upload');
+
+                    Yii::$app->session->setFlash('success', "Файл успешно загружен.");
+                    return $this->refresh();
+                }
+                else if($response->statusCode==403){
+                    Yii::$app->session->setFlash('warning', "Файл уже загружен.");
+                    
+                }
+                 else {
+                    Yii::$app->session->setFlash('error', "Ошибка загрузки.");
                 }
             } else {
-                Yii::warning("No file was uploaded.");
+                Yii::$app->session->setFlash('warning', "Нет файла для загрузки.");
             }
-        } else {
-            Yii::warning("Failed to load model from POST data.");
         }
     
         return $this->render('//site/file', [
             'model' => $model,
         ]);
     }
+    
+    
+    
     
     
 }

@@ -56,25 +56,26 @@ class LoginForm extends Model
      */
     public function login()
 {
-    if (!$this->validate()) {
-        return false;
+    if ($this->validate()) {
+       $client = new \yii\httpclient\Client();
+        $response = $client->createRequest()
+            ->setMethod('POST')
+            ->setUrl('http://webapiyii:8080/users/login')
+            ->setData([
+                'username' => $this->username,
+                'password' => $this->password,
+            ])
+            ->send();
+             // Извлекаем токен из ответа
+             $token = $response->data['data']['token'];
+    
+             // Сохраняем токен в сессии или куки, чтобы использовать его позже
+             Yii::$app->session->set('user-token', $token);
+              return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600 * 24 * 30 : 0);
     }
-
-    $client = new \yii\httpclient\Client();
-    $response = $client->createRequest()
-        ->setMethod('POST')
-        ->setUrl('http://webapiyii:8080/users/login')
-        ->setData([
-            'username' => $this->username,
-            'password' => $this->password,
-        ])
-        ->send();
-
-    if ($response->isOk) {
-        return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600 * 24 * 30 : 0);
-    } else {
-        return false;
-    }
+    return false;
+       
+    
 }
 
 
@@ -84,11 +85,19 @@ class LoginForm extends Model
      * @return User|null
      */
     protected function getUser()
-    {
-        if ($this->_user === null) {
-            $this->_user = User::findByUsername($this->username);
-        }
+{
+    if ($this->_user === null) {
+        $this->_user = User::findByUsername($this->username);
 
-        return $this->_user;
+        // Добавляем отладочные сообщения
+        if ($this->_user === null) {
+            Yii::warning("Пользователь с именем {$this->username} не найден.");
+        } else {
+            Yii::info("Пользователь с именем {$this->username} успешно найден.");
+        }
     }
+
+    return $this->_user;
+}
+
 }
