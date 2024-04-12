@@ -66,6 +66,10 @@ class FileController extends Controller
      *
      * @return mixed
      */
+    public function actionIndex()
+    {
+        return $this->render('index');
+    }
     public function actionCreate()
     {
         $model = new \frontend\models\FileForm();
@@ -101,7 +105,7 @@ class FileController extends Controller
             }
         }
     
-        return $this->render('//site/file', [
+        return $this->render('create', [
             'model' => $model,
         ]);
     }

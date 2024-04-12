@@ -16,7 +16,7 @@ $model = new \frontend\models\FileForm();
     <h1><?= Html::encode($this->title) ?></h1>
     <div class="row">
         <div class="col-lg-5">
-        <?php $form = ActiveForm::begin(['id' => 'file-form', 'action' => ['file/create']]); ?>
+        <?php $form = ActiveForm::begin(['id' => 'file-form', 'action' => ['create']]); ?>
 
                 <?= $form->field($model, 'file')->fileInput(['autofocus' => true])?>
 
