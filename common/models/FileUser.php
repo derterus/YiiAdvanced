@@ -38,8 +38,8 @@ class FileUser extends ActiveRecord
     public function rules()
     {
         return [
-            [['file_id', 'user_id'], 'required'],
-            [['file_id', 'user_id'], 'integer'],
+            [['file_id', 'user_id', 'access_level'], 'required'],
+            [['file_id', 'user_id','access_level'], 'integer'],
         ];
     }
 }

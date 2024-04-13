@@ -34,16 +34,22 @@ AppAsset::register($this);
             'class' => 'navbar navbar-expand-md navbar-dark bg-dark fixed-top',
         ],
     ]);
+
     $menuItems = [
+        
         ['label' => 'Главная', 'url' => ['/site/index']],
         ['label' => 'О нас', 'url' => ['/site/about']],
-        ['label' => 'Добавление файла', 'url' => ['file/create']],
         ['label' => 'Файлы', 'url' => ['file/index']],
     ];
     if (Yii::$app->user->isGuest) {
-        $menuItems[] = ['label' => 'Signup', 'url' => ['/site/signup'],
+        $menuItems[] = ['label' => 'Регистрация', 'url' => ['/site/signup'],
        ];
         
+    }
+    else{
+        $menuItems[] = ['label' => 'Добавление файла', 'url' => ['file/create'],];
+        $menuItems[] = ['label' => 'Мои файлы', 'url' => ['file/showmyfiles'],];
+
     }
 
     echo Nav::widget([

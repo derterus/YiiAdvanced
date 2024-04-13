@@ -47,6 +47,40 @@ class FileController extends ActiveController
             return ['success' => false, 'errors' => $fileModel->getErrors()];
         }
     }
+    public function actionShow()
+    {
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $files = Files::find()->all();
+    return $files;
+    }
+
+    public function actionShowmyfiles()
+    {
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $userId = Yii::$app->user->id; // Получаем ID текущего пользователя
+    $files = Files::find()->where(['created_by' => $userId])->all();
+    return $files;
+    }
+    public function actionDelete($id)
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $file = Files::findOne($id); // Находим файл по ID
+
+    if ($file && $file->created_by == Yii::$app->user->id) { // Проверяем, что файл существует и был создан текущим пользователем
+        $filePath = $file->path;  
+            if (file_exists($filePath)) {
+                unlink($filePath); // Удаляем файл из папки загрузки
+                return ['status' => 'success'];
+            }
+            
+    }
+
+    \Yii::$app->response->statusCode = 404;
+    return ['status' => 'error', 'message' => 'The requested file does not exist.'];
+    throw new \yii\web\NotFoundHttpException('The requested file does not exist.');
+}
+
+    
     
 
 

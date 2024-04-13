@@ -49,8 +49,12 @@ return [
                 'POST users/register' => 'user/register', 
                 'POST users/login' => 'user/login', 
                 'POST file/add' => 'file/add',
+                'GET file/show'=> 'file/show',
+                'GET file/show/my'=> 'file/showmyfiles',
+                'DELETE file/delete/<id:\d+>'=> 'file/delete', // <--- Измените это правило
             ],
         ]
+        
         
     ],
     'params' => $params,

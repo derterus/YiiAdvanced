@@ -10,6 +10,7 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\widgets\Alert;
 use frontend\models\FileForm;
+use common\models\Files;
 use frontend\models\FileUserForm;
 use yii\web\UploadedFile;
 
@@ -27,12 +28,12 @@ class FileController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout',],
+                'only' => ['index','create'],
                 'rules' => [
                     [
-                        'actions' => ['signup'],
+                        'actions' => ['index','create'],
                         'allow' => true,
-                        'roles' => ['?'],
+                        'roles' => ['@'],
                     ],
                 ],
             ],
@@ -68,8 +69,21 @@ class FileController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $client = new \yii\httpclient\Client();
+        $request = $client->createRequest()
+            ->setMethod('GET')
+            ->setUrl('http://webapiyii:8080/file/show');
+        // Добавляем токен в заголовки запроса
+        $request->addHeaders(['Authorization' => 'Bearer ' . Yii::$app->session->get('user-token')]);
+        $response = $request->send();
+        if ($response->getStatusCode() == 200) { // HTTP OK
+            $files = json_decode($response->getContent(), true);
+            return $this->render('index', ['files' => $files]);
+        } else {
+            throw new \yii\web\ServerErrorHttpException('API request failed.');
+        }
     }
+    
     public function actionCreate()
     {
         $model = new \frontend\models\FileForm();
@@ -109,9 +123,50 @@ class FileController extends Controller
             'model' => $model,
         ]);
     }
-    
-    
-    
-    
-    
-}
+    public function actionDownload($id)
+    {
+    $file = Files::findOne($id);
+    if ($file) {
+        return \Yii::$app->response->sendFile($file->path, $file->name);
+    }
+    throw new \yii\web\NotFoundHttpException('The requested file does not exist.');
+    }
+
+    public function actionShowmyfiles()
+    {
+        $client = new \yii\httpclient\Client();
+        $request = $client->createRequest()
+            ->setMethod('GET')
+            ->setUrl('http://webapiyii:8080/file/show/my');
+        // Добавляем токен в заголовки запроса
+        $request->addHeaders(['Authorization' => 'Bearer ' . Yii::$app->session->get('user-token')]);
+        $response = $request->send();
+        if ($response->getStatusCode() == 200) { // HTTP OK
+            $files = json_decode($response->getContent(), true);
+            return $this->render('myfile', ['files' => $files]);
+        } else {
+            throw new \yii\web\ServerErrorHttpException('API request failed.');
+        }
+    }
+
+
+    public function actionDelete($id)
+    {
+        Yii::$app->session->setFlash('success','Файл успешно удален');
+        $client = new \yii\httpclient\Client();
+        $request = $client->createRequest()
+            ->setMethod('DELETE')
+            ->setUrl('http://webapiyii:8080/file/delete/' . $id); // Добавляем id в URL
+        // Добавляем токен в заголовки запроса
+        $request->addHeaders(['Authorization' => 'Bearer ' . Yii::$app->session->get('user-token')]);
+        $response = $request->send();
+        if ($response->getStatusCode() == 200) { // HTTP OK
+            Yii::$app->session->setFlash('success','Файл успешно удален');
+            return $this->render('myfile');
+        } else {
+            throw new \yii\web\ServerErrorHttpException('API request failed.');
+        }
+    }
+
+  
+} 

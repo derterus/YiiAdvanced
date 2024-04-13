@@ -8,7 +8,7 @@ use Psy\VersionUpdater\Downloader\FileDownloader;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\ActiveForm;
 
-$this->title = 'Create File';
+$this->title = 'Загрузка файла';
 $this->params['breadcrumbs'][] = $this->title;
 $model = new \frontend\models\FileForm();
 ?>

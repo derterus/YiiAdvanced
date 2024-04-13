@@ -13,6 +13,7 @@ class m240409_060153_create_userFiles_migration extends Migration
             'id' => $this->primaryKey(),
             'file_id' => $this->integer()->notNull(),
             'user_id' => $this->integer()->notNull(),
+            'access_level'=>$this->integer()->notNull(),
             'created_at' => $this->integer(),
             'updated_at' => $this->integer(),
         ]);
