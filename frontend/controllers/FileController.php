@@ -11,6 +11,7 @@ use yii\filters\AccessControl;
 use common\widgets\Alert;
 use frontend\models\FileForm;
 use common\models\Files;
+use common\models\FileUser;
 use frontend\models\FileUserForm;
 use yii\web\UploadedFile;
 
@@ -28,10 +29,10 @@ class FileController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index','create'],
+                'only' => ['create','showmyfiles','delete'],
                 'rules' => [
                     [
-                        'actions' => ['index','create'],
+                        'actions' => ['create','showmyfiles','delete'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -73,8 +74,6 @@ class FileController extends Controller
         $request = $client->createRequest()
             ->setMethod('GET')
             ->setUrl('http://webapiyii:8080/file/show');
-        // Добавляем токен в заголовки запроса
-        $request->addHeaders(['Authorization' => 'Bearer ' . Yii::$app->session->get('user-token')]);
         $response = $request->send();
         if ($response->getStatusCode() == 200) { // HTTP OK
             $files = json_decode($response->getContent(), true);
@@ -83,6 +82,21 @@ class FileController extends Controller
             throw new \yii\web\ServerErrorHttpException('API request failed.');
         }
     }
+    public function actionEditaccess($id)
+    {
+    Yii::$app->session->setFlash('warning', "Файл уже загружен.");
+    $model = FileUser::findOne($id);
+
+    if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        // Здесь вы можете добавить код, который будет выполнен после сохранения модели
+    }
+
+    return $this->render('edit-access', [
+        'model' => $model,
+    ]);
+    }
+
+
     
     public function actionCreate()
     {
@@ -127,8 +141,37 @@ class FileController extends Controller
     {
     $file = Files::findOne($id);
     if ($file) {
-        return \Yii::$app->response->sendFile($file->path, $file->name);
+        // Получаем текущего пользователя
+        $user = Yii::$app->user->identity;
+
+        // Находим запись в таблице FileUser для данного файла
+        $fileUser = FileUser::find()->where(['file_id' => $id])->one();
+
+        // Проверяем, есть ли запись в таблице FileUser и соответствует ли уровень доступа требованиям
+        if ($fileUser) {
+            switch ($fileUser->access_level) {
+                case 0: // Файл доступен для всех пользователей
+                    return \Yii::$app->response->sendFile($file->path, $file->name);
+                case 1: // Файл доступен только для авторизованных пользователей
+                    if (!Yii::$app->user->isGuest) {
+                        return \Yii::$app->response->sendFile($file->path, $file->name);
+                    } else {
+                        throw new \yii\web\ForbiddenHttpException('Требуется авторизация.');
+                    }
+                case 2: // Файл доступен только для определенных пользователей
+                    if ($fileUser->user_id == $user->id) {
+                        return \Yii::$app->response->sendFile($file->path, $file->name);
+                    } else {
+                        throw new \yii\web\ForbiddenHttpException('У вас нет доступа к этому файлу.');
+                    }
+                default:
+                    throw new \yii\web\ForbiddenHttpException('У вас нет доступа к этому файлу.');
+            }
+        } else {
+            throw new \yii\web\ForbiddenHttpException('У вас нет доступа к этому файлу.');
+        }
     }
+
     throw new \yii\web\NotFoundHttpException('The requested file does not exist.');
     }
 
@@ -152,7 +195,6 @@ class FileController extends Controller
 
     public function actionDelete($id)
     {
-        Yii::$app->session->setFlash('success','Файл успешно удален');
         $client = new \yii\httpclient\Client();
         $request = $client->createRequest()
             ->setMethod('DELETE')
@@ -162,11 +204,12 @@ class FileController extends Controller
         $response = $request->send();
         if ($response->getStatusCode() == 200) { // HTTP OK
             Yii::$app->session->setFlash('success','Файл успешно удален');
-            return $this->render('myfile');
+            return $this->actionShowmyfiles(); // Вызываем метод actionShowmyfiles
         } else {
             throw new \yii\web\ServerErrorHttpException('API request failed.');
         }
     }
+    
 
   
 } 

@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  * @property integer $id
  * @property integer $file_id
  * @property integer $user_id
+ * @property integer $access_level
  */
 class FileUser extends ActiveRecord
 {

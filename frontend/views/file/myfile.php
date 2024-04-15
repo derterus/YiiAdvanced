@@ -1,7 +1,8 @@
 <?php
+use yii\bootstrap5\Modal;
+use yii\helpers\Url;
 use yii\grid\GridView;
 use yii\helpers\Html;
-use yii\helpers\Url;
 
 /* @var $this yii\web\View */
 /* @var $files array */
@@ -26,7 +27,11 @@ $this->title = 'Мои файлы';
                 'template' => '{update} {delete}',
                 'buttons' => [
                     'update' => function ($url, $model) {
-                        return Html::a('Edit Access', ['file/edit-access', 'id' => $model['id']], ['class' => 'btn btn-primary']);
+                        return Html::a('Edit access', ['file/editaccess', 'id' => $model['id']], [
+                            'class' => 'btn btn-warning',
+                        
+                            'data-method' => 'post',
+                        ]);
                     },
                     'delete' => function ($url, $model) {
                         return Html::a('Delete', ['file/delete', 'id' => $model['id']], [
@@ -39,4 +44,29 @@ $this->title = 'Мои файлы';
             ],
         ],
     ]); ?>
+
+    <?php
+    Modal::begin([
+        'id' => 'modal',
+        'title' => '<h2>Edit Access</h2>',
+        'options' => ['class' => 'modal-lg'], // Здесь вы можете установить класс для изменения размера модального окна
+    ]);
+
+    echo "<div id='modalContent'></div>";
+
+    Modal::end();
+    ?>
+
 </div>
+
+<?php
+$this->registerJs("
+$(function(){
+    $('#modalButton').click(function (){
+        $('#modal').modal('show')
+            .find('#modalContent')
+            .load($(this).attr('value'));
+    });
+});
+");
+?>

@@ -51,7 +51,7 @@ return [
                 'POST file/add' => 'file/add',
                 'GET file/show'=> 'file/show',
                 'GET file/show/my'=> 'file/showmyfiles',
-                'DELETE file/delete/<id:\d+>'=> 'file/delete', // <--- Измените это правило
+                'DELETE file/delete/<id:\d+>'=> 'file/folderdelete', // <--- Измените это правило
             ],
         ]
         
