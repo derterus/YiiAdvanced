@@ -29,10 +29,12 @@ $this->title = 'Мои файлы';
                     'update' => function ($url, $model) {
                         return Html::a('Edit access', ['file/editaccess', 'id' => $model['id']], [
                             'class' => 'btn btn-warning',
-                        
+                            'id' => 'modalButton', // Добавьте эту строку
+                            'value' => Url::to(['file/editaccess', 'id' => $model['id']]), // И эту строку
                             'data-method' => 'post',
                         ]);
                     },
+                    
                     'delete' => function ($url, $model) {
                         return Html::a('Delete', ['file/delete', 'id' => $model['id']], [
                             'class' => 'btn btn-danger',
@@ -59,14 +61,26 @@ $this->title = 'Мои файлы';
 
 </div>
 
-<?php
-$this->registerJs("
-$(function(){
-    $('#modalButton').click(function (){
-        $('#modal').modal('show')
-            .find('#modalContent')
-            .load($(this).attr('value'));
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('click', function(event) {
+        if (event.target.id === 'modalButton') {
+            event.preventDefault();
+            var modal = document.getElementById('modal');
+            var modalContent = modal.querySelector('#modalContent');
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', event.target.getAttribute('value'), true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    modalContent.innerHTML = xhr.responseText;
+                    modal.style.display = 'block';
+                }
+            };
+            xhr.send();
+        }
     });
 });
-");
-?>
+
+</script>
+    
+

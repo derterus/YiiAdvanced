@@ -14,6 +14,7 @@ use common\models\Files;
 use common\models\FileUser;
 use frontend\models\FileUserForm;
 use yii\web\UploadedFile;
+use common\models\FileAccess;
 
 
 /**
@@ -84,17 +85,67 @@ class FileController extends Controller
     }
     public function actionEditaccess($id)
     {
-    Yii::$app->session->setFlash('warning', "Файл уже загружен.");
+    Yii::$app->session->setFlash('warning', "дадада");
     $model = FileUser::findOne($id);
 
-    if ($model->load(Yii::$app->request->post()) && $model->save()) {
-        // Здесь вы можете добавить код, который будет выполнен после сохранения модели
-    }
 
     return $this->render('edit-access', [
         'model' => $model,
     ]);
     }
+    
+    public function actionAccessform($id) 
+    {
+        $model = FileUser::findOne($id);
+        $postData = Yii::$app->request->post();
+        $accessLevels = [
+            'all' => 0,
+            'registered' => 1,
+            'individual' => 2,
+        ];
+    
+        // Загружаем уровень доступа напрямую из данных формы
+        $accessLevel = $postData['FileUser']['access_level'];
+    
+        // Устанавливаем уровень доступа в зависимости от выбранного значения
+        $model->access_level = $accessLevels[$accessLevel];
+    
+        // Сохраняем модель FileUser
+        if ($model->save()) {
+            // Если выбраны отдельные пользователи, обновляем записи в таблице FileAccess
+            if ($model->access_level == 2) {
+                // Удаляем все текущие записи для этого файла
+                FileAccess::deleteAll(['file_id' => $model->file_id]);
+                // Добавляем новые записи для каждого выбранного пользователя
+                $selectedUsers = $postData['FileUser']['user_id'];
+                if ($selectedUsers != null) {
+                    foreach ($selectedUsers as $userId) {
+                        $fileAccess = new FileAccess();
+                        $fileAccess->file_id = $model->file_id;
+                        $fileAccess->user_id = $userId;
+                        $fileAccess->save();
+                    }
+                   
+                    $fileAccess = new FileAccess();
+                    $fileAccess->file_id = $model->file_id;
+                    $fileAccess->user_id = Yii::$app->user->id; // ID текущего пользователя
+                    $fileAccess->save();
+                }
+                else{
+                    // Если не выбраны отдельные пользователи, создаем запись доступа для текущего пользователя
+                    $fileAccess = new FileAccess();
+                    $fileAccess->file_id = $model->file_id;
+                    $fileAccess->user_id = Yii::$app->user->id; // ID текущего пользователя
+                    $fileAccess->save();
+                }
+            }
+        }
+    
+        return $this->render('edit-access', [
+            'model' => $model,
+        ]);
+    }
+    
 
 
     
@@ -159,7 +210,8 @@ class FileController extends Controller
                         throw new \yii\web\ForbiddenHttpException('Требуется авторизация.');
                     }
                 case 2: // Файл доступен только для определенных пользователей
-                    if ($fileUser->user_id == $user->id) {
+                    $access = FileAccess::find()->where(['file_id' => $file->id, 'user_id' => $user->id])->one();
+                    if ($access !== null) {
                         return \Yii::$app->response->sendFile($file->path, $file->name);
                     } else {
                         throw new \yii\web\ForbiddenHttpException('У вас нет доступа к этому файлу.');
